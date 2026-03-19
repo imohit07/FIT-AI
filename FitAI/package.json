@@ -1,0 +1,31 @@
+{
+  "name": "fitai",
+  "version": "1.0.0",
+  "description": "FitAI - Gym AI Tracker with ML Service",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "ml-service"
+  ],
+  "scripts": {
+    "dev": "npm run dev:backend & npm run dev:frontend & npm run dev:ml",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:ml": "cd ml-service && pip install -r requirements.txt && uvicorn app.main:app --reload --port 8000",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && npm run start",
+    "start:frontend": "cd frontend && npm run preview",
+    "start:ml": "cd ml-service && uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
