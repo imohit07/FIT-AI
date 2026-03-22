@@ -231,10 +231,11 @@ export default function WorkoutPage() {
                       <td className="py-2 text-center">
                         <button
                           onClick={() => deleteWorkout(idx)}
-                          className="text-accentRed hover:bg-red-50 rounded p-1 transition"
+                          className="text-accentRed hover:bg-red-50 rounded px-2 py-1 transition text-xs"
                           title="Delete"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="inline-block" />
+                          <span className="ml-1 hidden sm:inline">Delete</span>
                         </button>
                       </td>
                     </tr>

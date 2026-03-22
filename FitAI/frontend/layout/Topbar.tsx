@@ -1,6 +1,7 @@
 import { Flame, Plus } from "lucide-react";
 import { useAuth } from "../services/AuthContext";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Topbar(props: { 
   caloriesIn?: number; 
@@ -11,6 +12,7 @@ export default function Topbar(props: {
   onRefresh?: () => void;
 }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showMessage, setShowMessage] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const pct =
@@ -115,9 +117,15 @@ export default function Topbar(props: {
               </div>
               <div className="hidden sm:block">
                 <div className="text-xs font-semibold text-textDark">{user?.name || "User"}</div>
-                <button onClick={logout} className="text-[11px] text-slate-500 hover:text-slate-700">
-                  Logout
-                </button>
+                <button
+                onClick={() => {
+                  logout();
+                  navigate("/login", { replace: true });
+                }}
+                className="text-[11px] text-slate-500 hover:text-slate-700"
+              >
+                Logout
+              </button>
               </div>
             </div>
           </div>

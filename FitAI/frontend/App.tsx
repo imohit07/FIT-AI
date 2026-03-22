@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import { useAuth } from "./services/AuthContext";
 import { useEffect, useState, createContext, useContext } from "react";
 import api from "./services/api";
@@ -31,7 +31,7 @@ export const useTopbar = () => {
 };
 
 function PrivateRoutes() {
-  const { token } = useAuth();
+  const { token, isLoading } = useAuth();
   const [topbarData, setTopbarData] = useState<TopbarData>({ caloriesIn: 0, targetCalories: 2000 });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -119,6 +119,11 @@ function PrivateRoutes() {
   const refreshTopbar = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+
+  if (isLoading) return null; // wait for auth data to load before rendering routes
+
+  if (!token) return <Navigate to="/login" replace />;
+
   return (
     <TopbarContext.Provider value={{ refreshTopbar }}>
       <Layout topbar={{...topbarData, onRefresh: refreshTopbar}}>
