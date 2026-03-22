@@ -3,7 +3,7 @@ import api from "../services/api";
 import SimpleLineChart from "../charts/SimpleLineChart";
 import KPICard from "../components/KPICard";
 import ChartCard from "../components/ChartCard";
-import { Activity, Dumbbell, Flame, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { Activity, Dumbbell, Flame, Zap } from "lucide-react";
 import RingKPI from "../charts/RingKPI";
 
 interface TodayFood {
@@ -25,6 +25,15 @@ interface WorkoutLog {
   date: string;
   dateString?: string;
   totalCaloriesBurned: number;
+}
+
+interface UserProfile {
+  targetCalories?: number;
+  age?: number;
+  height?: number;
+  weight?: number;
+  goal?: "fat_loss" | "muscle_gain" | "maintain";
+  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
 }
 
 export default function DashboardPage() {
@@ -158,7 +167,7 @@ export default function DashboardPage() {
       very_active: 1.9
     };
 
-    const tdee = bmr * activityMultipliers[activityLevel];
+    const tdee = bmr * activityMultipliers[activityLevel as keyof typeof activityMultipliers];
 
     // Calculate target based on goal
     let targetCalories;
