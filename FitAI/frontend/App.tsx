@@ -16,6 +16,7 @@ import Layout from "./components/Layout";
 interface TopbarData {
   caloriesIn: number;
   targetCalories: number;
+  currentStreak?: number;
 }
 
 function PrivateRoutes() {
@@ -26,16 +27,51 @@ function PrivateRoutes() {
     async function loadTopbarData() {
       if (!token) return;
       try {
-        const [foodRes, profileRes] = await Promise.all([
+        const [foodRes, profileRes, foodHistRes, workoutHistRes] = await Promise.all([
           api.get("/food/today"),
-          api.get("/profile")
+          api.get("/profile"),
+          api.get("/food/history"),
+          api.get("/workout/history")
         ]);
         const caloriesIn = foodRes.data?.totalCalories ?? 0;
         const targetCalories = profileRes.data?.targetCalories ?? 2000;
-        setTopbarData({ caloriesIn, targetCalories });
+        const foodHistory = foodHistRes.data || [];
+        const workoutHistory = workoutHistRes.data || [];
+
+        // Calculate current streak
+        let streak = 0;
+        const today = new Date();
+        
+        for (let i = 0; i < 30; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+
+          const foodLog = foodHistory.find((f: any) => {
+            const logDate = f.dateString || f.date.split('T')[0];
+            return logDate === dateStr;
+          });
+          const workoutLog = workoutHistory.find((w: any) => {
+            const logDate = w.dateString || w.date.split('T')[0];
+            return logDate === dateStr;
+          });
+
+          const caloriesConsumed = foodLog?.totalCalories ?? 0;
+          const caloriesBurned = workoutLog?.totalCaloriesBurned ?? 0;
+          const netCalories = caloriesConsumed - caloriesBurned;
+          const distanceFromTarget = targetCalories - netCalories;
+
+          const tolerance = targetCalories * 0.1;
+          if (Math.abs(distanceFromTarget) <= tolerance) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+
+        setTopbarData({ caloriesIn, targetCalories, currentStreak: streak });
       } catch (e) {
-        // Use defaults on error
-        setTopbarData({ caloriesIn: 0, targetCalories: 2000 });
+        setTopbarData({ caloriesIn: 0, targetCalories: 2000, currentStreak: 0 });
       }
     }
     loadTopbarData();

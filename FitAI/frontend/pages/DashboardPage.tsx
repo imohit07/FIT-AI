@@ -105,45 +105,6 @@ export default function DashboardPage() {
 
   const progressData = getDailyProgressData();
 
-  // Calculate current streak of days hitting target
-  const getCurrentStreak = () => {
-    let streak = 0;
-    const today = new Date();
-    
-    // Check from today backwards
-    for (let i = 0; i < 30; i++) { // Check up to 30 days back
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-
-      const foodLog = foodHistory.find(f => {
-        const logDate = f.dateString || f.date.split('T')[0];
-        return logDate === dateStr;
-      });
-      const workoutLog = workoutHistory.find(w => {
-        const logDate = w.dateString || w.date.split('T')[0];
-        return logDate === dateStr;
-      });
-
-      const caloriesConsumed = foodLog?.totalCalories ?? 0;
-      const caloriesBurned = workoutLog?.totalCaloriesBurned ?? 0;
-      const netCalories = caloriesConsumed - caloriesBurned;
-      const distanceFromTarget = target - netCalories;
-
-      // Consider target hit if within 10% of target (allowing some flexibility)
-      const tolerance = target * 0.1; // 10% tolerance
-      if (Math.abs(distanceFromTarget) <= tolerance) {
-        streak++;
-      } else {
-        break; // Streak broken
-      }
-    }
-    
-    return streak;
-  };
-
-  const currentStreak = getCurrentStreak();
-
   // Calculate calories to burn based on user profile and goals
   const calculateCaloriesToBurn = () => {
     if (!profile || !profile.age || !profile.height || !profile.weight || !profile.goal || !profile.activityLevel) {
@@ -211,7 +172,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Calories Consumed Today"
           value={`${caloriesIn.toFixed(0)} kcal`}
@@ -230,14 +191,6 @@ export default function DashboardPage() {
           value={`${(todayFood?.totalProtein ?? 0).toFixed(0)} g`}
           right={<RingKPI value={todayFood?.totalProtein ?? 0} max={140} labelTop="Protein" labelBottom="goal" color="#10B981" />}
           icon={<Dumbbell size={18} />}
-        />
-        <KPICard
-          title="Current Streak"
-          value={`${currentStreak} days`}
-          subtext="Days hitting calorie targets"
-          tone={currentStreak > 0 ? "green" : "default"}
-          right={<RingKPI value={currentStreak} max={7} labelTop="Streak" labelBottom="days" color="#F59E0B" />}
-          icon={<Flame size={18} />}
         />
         <KPICard
           title="Calories to Burn"

@@ -6,7 +6,7 @@ export default function Layout({
   topbar
 }: {
   children: React.ReactNode;
-  topbar?: { caloriesIn?: number; targetCalories?: number; onQuickAdd?: () => void };
+  topbar?: { caloriesIn?: number; targetCalories?: number; onQuickAdd?: () => void; currentStreak?: number };
 }) {
   return (
     <div className="min-h-screen bg-dashboardBg text-textDark">
@@ -17,6 +17,7 @@ export default function Layout({
             caloriesIn={topbar?.caloriesIn}
             targetCalories={topbar?.targetCalories}
             onQuickAdd={topbar?.onQuickAdd}
+            currentStreak={topbar?.currentStreak}
           />
           <main className="mx-auto max-w-[1200px] px-4 py-6">{children}</main>
         </div>

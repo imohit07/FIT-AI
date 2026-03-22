@@ -1,10 +1,16 @@
-import { Bell, Plus } from "lucide-react";
+import { Flame, Plus } from "lucide-react";
 import { useAuth } from "../services/AuthContext";
 import { useState } from "react";
 
-export default function Topbar(props: { caloriesIn?: number; targetCalories?: number; onQuickAdd?: () => void }) {
+export default function Topbar(props: { 
+  caloriesIn?: number; 
+  targetCalories?: number; 
+  onQuickAdd?: () => void;
+  currentStreak?: number;
+}) {
   const { user, logout } = useAuth();
   const [showMessage, setShowMessage] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const pct =
     props.targetCalories && props.targetCalories > 0
       ? Math.min(100, Math.round(((props.caloriesIn ?? 0) / props.targetCalories) * 100))
@@ -15,8 +21,41 @@ export default function Topbar(props: { caloriesIn?: number; targetCalories?: nu
     setTimeout(() => setShowMessage(false), 3000);
   };
 
+  const handleStreakClick = () => {
+    setShowStreakModal(true);
+  };
+
   return (
     <>
+      {/* Streak Modal */}
+      {showStreakModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowStreakModal(false)}>
+          <div className="bg-white rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <Flame size={24} className="text-orange-500" />
+              <h3 className="text-lg font-semibold text-gray-900">Your Streak</h3>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-orange-500 mb-2">
+                {props.currentStreak || 0}
+              </div>
+              <div className="text-gray-600 mb-4">
+                {props.currentStreak === 1 ? 'day' : 'days'} hitting your calorie targets
+              </div>
+              <div className="text-sm text-gray-500">
+                Keep it up! Consistency is key to reaching your fitness goals.
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowStreakModal(false)}
+              className="w-full mt-4 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="sticky top-0 z-10 border-b border-borderGray bg-white">
         <div className="mx-auto max-w-[1200px] px-4 py-3 flex items-center justify-between gap-3">
           <div className="lg:hidden flex items-center gap-2">
@@ -41,8 +80,16 @@ export default function Topbar(props: { caloriesIn?: number; targetCalories?: nu
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="h-10 w-10 rounded-xl border border-borderGray bg-white hover:bg-slate-50 flex items-center justify-center">
-              <Bell size={18} className="text-slate-600" />
+            <button 
+              onClick={handleStreakClick}
+              className="h-10 w-10 rounded-xl border border-borderGray bg-white hover:bg-slate-50 flex items-center justify-center relative"
+            >
+              <Flame size={18} className="text-orange-500" />
+              {(props.currentStreak ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  {props.currentStreak}
+                </span>
+              )}
             </button>
             <button
               onClick={handleQuickAdd}
