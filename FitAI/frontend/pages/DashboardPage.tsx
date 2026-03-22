@@ -91,8 +91,12 @@ export default function DashboardPage() {
         <ChartCard title="Weight Progress Chart">
           <SimpleLineChart labels={["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]} data={[78, 77.8, 77.6, 77.5, 77.3, 77.2, 77.1]} label="Weight (kg)" />
         </ChartCard>
-        <ChartCard title="Calories In vs Calories Out">
-          <SimpleLineChart labels={["In", "Out"]} data={[caloriesIn, caloriesOut]} label="Calories" />
+        <ChartCard title="Daily Calorie Goal Progress">
+          <SimpleLineChart 
+            labels={["Target", "Consumed", "Net"]} 
+            data={[target, caloriesIn, caloriesIn - caloriesOut]} 
+            label="Calories" 
+          />
         </ChartCard>
       </div>
     </div>
