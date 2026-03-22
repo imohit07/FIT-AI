@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import api from "../services/api";
 import { Sparkles, Trash2 } from "lucide-react";
+import { useTopbar } from "../App";
 
 interface Exercise {
   name: string;
@@ -30,6 +31,7 @@ export default function WorkoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
   const [aiStatus, setAiStatus] = useState<string | null>(null);
+  const { refreshTopbar } = useTopbar();
 
   async function load() {
     const res = await api.get("/workout/today");
@@ -47,6 +49,7 @@ export default function WorkoutPage() {
       await api.post("/workout/add", form);
       setForm({ ...form, name: "", muscleGroup: "" });
       await load();
+      refreshTopbar();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to add workout");
     }
@@ -56,6 +59,7 @@ export default function WorkoutPage() {
     try {
       await api.delete(`/workout/delete/${idx}`);
       await load();
+      refreshTopbar();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to delete workout");
     }
@@ -173,6 +177,7 @@ export default function WorkoutPage() {
                   setChatText("");
                   setAiStatus("Added to today's workout.");
                   await load();
+                  refreshTopbar();
                 } catch (err: any) {
                   setAiStatus(null);
                   setError(err.response?.data?.message || "AI workout add failed (check GEMINI_API_KEY)");

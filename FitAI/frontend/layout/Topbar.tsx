@@ -8,6 +8,7 @@ export default function Topbar(props: {
   onQuickAdd?: () => void;
   currentStreak?: number;
   caloriesToBurn?: number;
+  onRefresh?: () => void;
 }) {
   const { user, logout } = useAuth();
   const [showMessage, setShowMessage] = useState(false);

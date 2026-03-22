@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import api from "../services/api";
 import { Sparkles, Trash2 } from "lucide-react";
+import { useTopbar } from "../App";
 
 interface FoodItem {
   name: string;
@@ -32,6 +33,7 @@ export default function FoodPage() {
   const [error, setError] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
   const [aiStatus, setAiStatus] = useState<string | null>(null);
+  const { refreshTopbar } = useTopbar();
 
   async function load() {
     const res = await api.get("/food/today");
@@ -49,6 +51,7 @@ export default function FoodPage() {
       await api.post("/food/add", form);
       setForm({ ...form, name: "", calories: 0, protein: 0, carbs: 0, fats: 0 });
       await load();
+      refreshTopbar();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to add food");
     }
@@ -58,6 +61,7 @@ export default function FoodPage() {
     try {
       await api.delete(`/food/delete/${idx}`);
       await load();
+      refreshTopbar();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to delete food");
     }
@@ -169,6 +173,7 @@ export default function FoodPage() {
                   setChatText("");
                   setAiStatus("Added to today's log.");
                   await load();
+                  refreshTopbar();
                 } catch (err: any) {
                   setAiStatus(null);
                   setError(err.response?.data?.message || "AI add failed (check GEMINI_API_KEY on backend)");

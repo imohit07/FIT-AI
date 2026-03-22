@@ -13,15 +13,48 @@ interface Profile {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [calculatedCalories, setCalculatedCalories] = useState<number | null>(null);
 
   async function load() {
     const res = await api.get("/profile");
     setProfile(res.data);
+    setCalculatedCalories(null);
   }
 
   useEffect(() => {
     load();
   }, []);
+
+  // Calculate target calories when profile data changes
+  useEffect(() => {
+    if (profile && profile.age && profile.height && profile.weight && profile.activityLevel && profile.goal) {
+      const bmr = 10 * profile.weight + 6.25 * profile.height - 5 * profile.age + 5;
+      const activityMultipliers = {
+        sedentary: 1.2,
+        light: 1.375,
+        moderate: 1.55,
+        active: 1.725,
+        very_active: 1.9
+      };
+      const tdee = bmr * activityMultipliers[profile.activityLevel as keyof typeof activityMultipliers];
+      
+      let target: number;
+      switch (profile.goal) {
+        case 'fat_loss':
+          target = Math.round(tdee - 500);
+          break;
+        case 'muscle_gain':
+          target = Math.round(tdee + 300);
+          break;
+        case 'maintain':
+        default:
+          target = Math.round(tdee);
+      }
+      setCalculatedCalories(target);
+    } else {
+      setCalculatedCalories(null);
+    }
+  }, [profile?.age, profile?.height, profile?.weight, profile?.activityLevel, profile?.goal]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -127,6 +160,14 @@ export default function ProfilePage() {
                 })
               }
             />
+            {calculatedCalories && (
+              <p className="text-xs text-slate-500 mt-1">
+                Auto-calculated: {calculatedCalories} cal/day
+                {profile.targetCalories && profile.targetCalories !== calculatedCalories && (
+                  <span className="text-amber-600 ml-1">(custom)</span>
+                )}
+              </p>
+            )}
           </div>
           <div className="md:col-span-2 mt-2">
             <button

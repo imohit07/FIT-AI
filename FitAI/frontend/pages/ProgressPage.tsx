@@ -15,21 +15,27 @@ export default function ProgressPage() {
   async function load() {
     const res = await api.get("/progress/history");
     const items = (res.data as any[]).map((p) => {
-      // Handle both string dates and Firestore Timestamp objects
+      // Use dateString if available, otherwise format the date
       let dateStr: string;
-      if (typeof p.date === 'string') {
+      if (p.dateString) {
+        dateStr = p.dateString;
+      } else if (typeof p.date === 'string') {
         dateStr = p.date.slice(0, 10);
       } else if (p.date && p.date.toDate) {
         // Firestore Timestamp
         dateStr = p.date.toDate().toISOString().slice(0, 10);
+      } else if (p.date) {
+        dateStr = new Date(p.date).toISOString().slice(0, 10);
       } else {
-        dateStr = String(p.date).slice(0, 10);
+        dateStr = new Date().toISOString().slice(0, 10);
       }
       return {
         date: dateStr,
         weight: p.weight
       };
     });
+    // Sort by date ascending for chart
+    items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setHistory(items);
   }
 
@@ -45,7 +51,10 @@ export default function ProgressPage() {
     await load();
   };
 
-  const labels = history.map((h) => h.date);
+  const labels = history.map((h) => {
+    const date = new Date(h.date);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
   const data = history.map((h) => h.weight);
 
   return (

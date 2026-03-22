@@ -1,6 +1,6 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { useAuth } from "./services/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import api from "./services/api";
 import DashboardPage from "./pages/DashboardPage";
 import FoodPage from "./pages/FoodPage";
@@ -20,12 +20,22 @@ interface TopbarData {
   caloriesToBurn?: number;
 }
 
+const TopbarContext = createContext<{ refreshTopbar: () => void } | null>(null);
+
+export const useTopbar = () => {
+  const context = useContext(TopbarContext);
+  if (!context) {
+    throw new Error('useTopbar must be used within TopbarProvider');
+  }
+  return context;
+};
+
 function PrivateRoutes() {
   const { token } = useAuth();
   const [topbarData, setTopbarData] = useState<TopbarData>({ caloriesIn: 0, targetCalories: 2000 });
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    async function loadTopbarData() {
+  const loadTopbarData = async () => {
       if (!token) return;
       try {
         const [foodRes, profileRes, foodHistRes, workoutHistRes] = await Promise.all([
@@ -102,22 +112,27 @@ function PrivateRoutes() {
         setTopbarData({ caloriesIn: 0, targetCalories: 2000, currentStreak: 0 });
       }
     }
+  useEffect(() => {
     loadTopbarData();
-  }, [token]);
+  }, [token, refreshTrigger]);
 
-  if (!token) return <Navigate to="/login" replace />;
+  const refreshTopbar = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
   return (
-    <Layout topbar={topbarData}>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/food" element={<FoodPage />} />
-        <Route path="/workout" element={<WorkoutPage />} />
-        <Route path="/progress" element={<ProgressPage />} />
-        <Route path="/recommendations" element={<RecommendationsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-      </Routes>
-    </Layout>
+    <TopbarContext.Provider value={{ refreshTopbar }}>
+      <Layout topbar={{...topbarData, onRefresh: refreshTopbar}}>
+        <Routes>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/food" element={<FoodPage />} />
+          <Route path="/workout" element={<WorkoutPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Routes>
+      </Layout>
+    </TopbarContext.Provider>
   );
 }
 

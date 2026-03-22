@@ -73,7 +73,22 @@ export default function DashboardPage() {
   // Default to 2000 calories if no target is set
   const target = profile?.targetCalories ?? 2000;
   const weekly = weeklyChange ?? 0;
-  const weeklyTone = weekly < 0 ? "green" : weekly > 0 ? "blue" : "default";
+  
+  // Determine color based on user's goal
+  const getWeeklyTone = () => {
+    if (!profile?.goal) return "default";
+    
+    const goal = profile.goal;
+    if (goal === "fat_loss") {
+      return weekly > 0 ? "red" : "green"; // Red if gaining weight when trying to lose
+    } else if (goal === "muscle_gain") {
+      return weekly < 0 ? "red" : "blue"; // Red if losing weight when trying to gain
+    } else {
+      return weekly < 0 ? "green" : weekly > 0 ? "blue" : "default"; // Default logic for maintain
+    }
+  };
+  
+  const weeklyTone = getWeeklyTone();
   const weeklyIcon = weekly < 0 ? <TrendingDown size={18} /> : <TrendingUp size={18} />;
 
   // Calculate daily net distance from target for the last 7 days
