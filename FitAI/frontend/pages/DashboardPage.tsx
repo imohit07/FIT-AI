@@ -70,10 +70,39 @@ export default function DashboardPage() {
 
   const caloriesIn = todayFood?.totalCalories ?? 0;
   const caloriesOut = todayWorkout?.totalCaloriesBurned ?? 0;
-  // Default to 2000 calories if no target is set
-  const target = profile?.targetCalories ?? 2000;
   const weekly = weeklyChange ?? 0;
-  
+
+  const calculateBMR = (user: UserProfile) => {
+    if (!user.age || !user.height || !user.weight) return null;
+    return 10 * user.weight + 6.25 * user.height - 5 * user.age + 5;
+  };
+
+  const activityMultipliers: Record<string, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+    very_active: 1.9
+  };
+
+  const calculateTDEE = (user: UserProfile) => {
+    const bmr = calculateBMR(user);
+    if (bmr === null || !user.activityLevel) return null;
+    return bmr * (activityMultipliers[user.activityLevel] ?? 1.55);
+  };
+
+  const recommendedBurn = () => {
+    if (!profile) return 600;
+    if (profile.goal === "fat_loss") return 500;
+    if (profile.goal === "muscle_gain") return 350;
+    return 450;
+  };
+
+  const burnGoal = recommendedBurn();
+  const tdee = calculateTDEE(profile ?? {} as UserProfile);
+  const estimatedTargetCalories = tdee ? Math.round(tdee - (profile?.goal === "fat_loss" ? 500 : profile?.goal === "muscle_gain" ? -300 : 0)) : undefined;
+  const target = profile?.targetCalories ?? estimatedTargetCalories ?? 2000;
+
   // Determine color based on user's goal
   const getWeeklyTone = () => {
     if (!profile?.goal) return "default";
@@ -146,7 +175,8 @@ export default function DashboardPage() {
         <KPICard
           title="Calories Burned"
           value={`${caloriesOut.toFixed(0)} kcal`}
-          right={<RingKPI value={caloriesOut} max={600} labelTop="Burned" labelBottom="today" color="#3B82F6" />}
+          subtext={`Daily burn goal: ${burnGoal.toFixed(0)} kcal`}
+          right={<RingKPI value={caloriesOut} max={Math.max(burnGoal, 1)} labelTop="Burned" labelBottom="today" color="#3B82F6" />}
           icon={<Activity size={18} />}
         />
         <KPICard
