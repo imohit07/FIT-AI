@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://fit-ai-backend-zekt.onrender.com/"
+  baseURL: "https://fit-ai-backend-zekt.onrender.com"
 });
 
 api.interceptors.request.use((config) => {
