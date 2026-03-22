@@ -12,7 +12,7 @@ export const env = {
     databaseUrl: process.env.FIREBASE_DATABASE_URL || "",
   },
   jwtSecret: process.env.JWT_SECRET || "dev-secret",
-  mlServiceUrl: process.env.ML_SERVICE_URL || "http://localhost:8000",
+  mlServiceUrl: process.env.ML_SERVICE_URL || "https://fit-ai-ml-service.onrender.com",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   groqApiKey: process.env.GROQ_API_KEY || "",
   nodeEnv: process.env.NODE_ENV || "development"
