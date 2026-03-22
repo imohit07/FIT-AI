@@ -3,7 +3,7 @@ import api from "../services/api";
 import SimpleLineChart from "../charts/SimpleLineChart";
 import KPICard from "../components/KPICard";
 import ChartCard from "../components/ChartCard";
-import { Activity, Dumbbell, Flame, Zap } from "lucide-react";
+import { Activity, Dumbbell, Flame, TrendingDown, TrendingUp } from "lucide-react";
 import RingKPI from "../charts/RingKPI";
 
 interface TodayFood {
@@ -39,6 +39,7 @@ interface UserProfile {
 export default function DashboardPage() {
   const [todayFood, setTodayFood] = useState<TodayFood | null>(null);
   const [todayWorkout, setTodayWorkout] = useState<TodayWorkout | null>(null);
+  const [weeklyChange, setWeeklyChange] = useState<number | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [foodHistory, setFoodHistory] = useState<FoodLog[]>([]);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutLog[]>([]);
@@ -46,15 +47,17 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [foodRes, workoutRes, profileRes, foodHistRes, workoutHistRes] = await Promise.all([
+        const [foodRes, workoutRes, predictRes, profileRes, foodHistRes, workoutHistRes] = await Promise.all([
           api.get("/food/today"),
           api.get("/workout/today"),
+          api.post("/predict-weight", {}),
           api.get("/profile"),
           api.get("/food/history"),
           api.get("/workout/history")
         ]);
         setTodayFood(foodRes.data);
         setTodayWorkout(workoutRes.data);
+        setWeeklyChange(predictRes.data.weeklyChangeKg);
         setProfile(profileRes.data);
         setFoodHistory(foodHistRes.data);
         setWorkoutHistory(workoutHistRes.data);
@@ -69,6 +72,9 @@ export default function DashboardPage() {
   const caloriesOut = todayWorkout?.totalCaloriesBurned ?? 0;
   // Default to 2000 calories if no target is set
   const target = profile?.targetCalories ?? 2000;
+  const weekly = weeklyChange ?? 0;
+  const weeklyTone = weekly < 0 ? "green" : weekly > 0 ? "blue" : "default";
+  const weeklyIcon = weekly < 0 ? <TrendingDown size={18} /> : <TrendingUp size={18} />;
 
   // Calculate daily net distance from target for the last 7 days
   const getDailyProgressData = () => {
@@ -105,64 +111,6 @@ export default function DashboardPage() {
 
   const progressData = getDailyProgressData();
 
-  // Calculate calories to burn based on user profile and goals
-  const calculateCaloriesToBurn = () => {
-    if (!profile || !profile.age || !profile.height || !profile.weight || !profile.goal || !profile.activityLevel) {
-      return null;
-    }
-
-    const { age, height, weight, goal, activityLevel } = profile;
-
-    // Calculate BMR using Mifflin-St Jeor Equation
-    // For men: BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age + 5
-    // For women: BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age - 161
-    // Using average formula (closer to male)
-    const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-
-    // Activity multipliers
-    const activityMultipliers = {
-      sedentary: 1.2,
-      light: 1.375,
-      moderate: 1.55,
-      active: 1.725,
-      very_active: 1.9
-    };
-
-    const tdee = bmr * activityMultipliers[activityLevel as keyof typeof activityMultipliers];
-
-    // Calculate target based on goal
-    let targetCalories;
-    switch (goal) {
-      case "fat_loss":
-        targetCalories = tdee - 500; // 500 calorie deficit for 1lb/week loss
-        break;
-      case "muscle_gain":
-        targetCalories = tdee + 300; // 300 calorie surplus for muscle gain
-        break;
-      case "maintain":
-      default:
-        targetCalories = tdee;
-        break;
-    }
-
-    // Current net calories (consumed - burned)
-    const netCalories = caloriesIn - caloriesOut;
-
-    // Calories to burn through exercise to reach target
-    const caloriesToBurn = Math.max(0, netCalories - targetCalories);
-
-    return {
-      bmr: Math.round(bmr),
-      tdee: Math.round(tdee),
-      targetCalories: Math.round(targetCalories),
-      currentNet: Math.round(netCalories),
-      caloriesToBurn: Math.round(caloriesToBurn),
-      deficit: Math.round(targetCalories - netCalories)
-    };
-  };
-
-  const calorieCalculation = calculateCaloriesToBurn();
-
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-3">
@@ -193,12 +141,11 @@ export default function DashboardPage() {
           icon={<Dumbbell size={18} />}
         />
         <KPICard
-          title="Calories to Burn"
-          value={calorieCalculation ? `${calorieCalculation.caloriesToBurn} kcal` : "Complete profile"}
-          subtext={calorieCalculation ? `To reach ${calorieCalculation.targetCalories} kcal goal` : "Add age, height, weight"}
-          tone={calorieCalculation && calorieCalculation.caloriesToBurn > 0 ? "blue" : "default"}
-          right={calorieCalculation ? <RingKPI value={Math.min(calorieCalculation.caloriesToBurn, 500)} max={500} labelTop="To Burn" labelBottom="today" color="#EF4444" /> : undefined}
-          icon={<Zap size={18} />}
+          title="Predicted Weekly Weight Change"
+          value={weeklyChange != null ? `${weekly.toFixed(2)} kg` : "-"}
+          tone={weeklyTone as any}
+          right={<RingKPI value={Math.min(1, Math.abs(weekly))} max={1} labelTop="Trend" labelBottom="weekly" color={weekly < 0 ? "#10B981" : "#2563EB"} />}
+          icon={weeklyIcon}
         />
       </div>
 

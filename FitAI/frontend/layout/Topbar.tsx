@@ -7,6 +7,7 @@ export default function Topbar(props: {
   targetCalories?: number; 
   onQuickAdd?: () => void;
   currentStreak?: number;
+  caloriesToBurn?: number;
 }) {
   const { user, logout } = useAuth();
   const [showMessage, setShowMessage] = useState(false);
@@ -42,6 +43,15 @@ export default function Topbar(props: {
               <div className="text-gray-600 mb-4">
                 {props.currentStreak === 1 ? 'day' : 'days'} hitting your calorie targets
               </div>
+              {props.caloriesToBurn !== undefined && props.caloriesToBurn > 0 && (
+                <div className="bg-orange-50 rounded-lg p-3 mb-4">
+                  <div className="text-sm text-gray-700 mb-1">To reach your weight loss goal:</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {props.caloriesToBurn} kcal
+                  </div>
+                  <div className="text-xs text-gray-600">additional calories to burn today</div>
+                </div>
+              )}
               <div className="text-sm text-gray-500">
                 Keep it up! Consistency is key to reaching your fitness goals.
               </div>

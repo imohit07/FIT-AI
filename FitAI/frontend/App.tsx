@@ -17,6 +17,7 @@ interface TopbarData {
   caloriesIn: number;
   targetCalories: number;
   currentStreak?: number;
+  caloriesToBurn?: number;
 }
 
 function PrivateRoutes() {
@@ -37,6 +38,7 @@ function PrivateRoutes() {
         const targetCalories = profileRes.data?.targetCalories ?? 2000;
         const foodHistory = foodHistRes.data || [];
         const workoutHistory = workoutHistRes.data || [];
+        const profile = profileRes.data;
 
         // Calculate current streak
         let streak = 0;
@@ -69,7 +71,33 @@ function PrivateRoutes() {
           }
         }
 
-        setTopbarData({ caloriesIn, targetCalories, currentStreak: streak });
+        // Calculate calories to burn for weight loss goal
+        let caloriesToBurn: number | undefined;
+        if (profile?.age && profile?.height && profile?.weight && profile?.activityLevel) {
+          const { age, height, weight, activityLevel } = profile;
+          const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+          const activityMultipliers = {
+            sedentary: 1.2,
+            light: 1.375,
+            moderate: 1.55,
+            active: 1.725,
+            very_active: 1.9
+          };
+          const tdee = bmr * activityMultipliers[activityLevel as keyof typeof activityMultipliers];
+          const weightLossDeficit = 687.5; // for 2.75kg/month loss
+          const targetCaloriesForLoss = tdee - weightLossDeficit;
+          
+          const todayWorkout = workoutHistRes.data?.find((w: any) => {
+            const logDate = w.dateString || w.date.split('T')[0];
+            return logDate === today.toISOString().split('T')[0];
+          });
+          const caloriesBurnedToday = todayWorkout?.totalCaloriesBurned ?? 0;
+          const netCalories = caloriesIn - caloriesBurnedToday;
+          
+          caloriesToBurn = Math.max(0, netCalories - targetCaloriesForLoss);
+        }
+
+        setTopbarData({ caloriesIn, targetCalories, currentStreak: streak, caloriesToBurn });
       } catch (e) {
         setTopbarData({ caloriesIn: 0, targetCalories: 2000, currentStreak: 0 });
       }
