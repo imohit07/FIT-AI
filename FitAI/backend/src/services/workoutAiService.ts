@@ -90,16 +90,43 @@ Return JSON exactly (provide REAL values, not zero):
   const parsed = extractFirstJsonObject(raw) as any;
   const items = Array.isArray(parsed?.items) ? parsed.items : [];
 
+  const normalizeCalories = (exercise: ParsedExercise): number => {
+    let cal = exercise.caloriesBurned;
+
+    // Establish expected burn range
+    const duration = exercise.duration ?? 0;
+    const setsRepsEnergy = exercise.sets * exercise.reps * (exercise.weight || 1) * 0.06; // rough per-set baseline
+    const durationEnergy = duration > 0 ? duration * 9 : 0;
+
+    const expected = Math.max(50, durationEnergy, setsRepsEnergy, 60);
+
+    // If calories are wildly high (e.g., > 5x expected), reduce by 10x as likely unit mismatch or overestimate.
+    if (cal > expected * 5 && cal > 1000) {
+      cal = Math.round(cal / 10);
+    }
+
+    // Clamp to a realistic high bound per exercise to avoid outliers
+    const highClamp = Math.max(expected * 2.5, 1200);
+    if (cal > highClamp) {
+      cal = Math.round(highClamp);
+    }
+
+    return Math.max(1, cal);
+  };
+
   const normalized: ParsedExercise[] = items
-    .map((it: any) => ({
-      name: String(it?.name || "").trim(),
-      sets: Number(it?.sets ?? 0),
-      reps: Number(it?.reps ?? 0),
-      weight: Number(it?.weight ?? 0),
-      muscleGroup: String(it?.muscleGroup || "other"),
-      caloriesBurned: Number(it?.caloriesBurned ?? 0),
-      duration: it?.duration != null ? Number(it.duration) : undefined
-    }))
+    .map((it: any) => {
+      const raw = {
+        name: String(it?.name || "").trim(),
+        sets: Number(it?.sets ?? 0),
+        reps: Number(it?.reps ?? 0),
+        weight: Number(it?.weight ?? 0),
+        muscleGroup: String(it?.muscleGroup || "other"),
+        caloriesBurned: Number(it?.caloriesBurned ?? 0),
+        duration: it?.duration != null ? Number(it.duration) : undefined
+      };
+      return { ...raw, caloriesBurned: normalizeCalories(raw) };
+    })
     .filter((it: any) => it.name.length > 0 && Number.isFinite(it.caloriesBurned));
 
   return {
